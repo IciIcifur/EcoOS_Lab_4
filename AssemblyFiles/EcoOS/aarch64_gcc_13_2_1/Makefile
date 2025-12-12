@@ -53,7 +53,6 @@ INC = \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
 -I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
 
-
 # source files.
 SRC = \
 ..$(SLASH)..$(SLASH)..$(SLASH)SourceFiles$(SLASH)CEcoTask1Lab.c \
@@ -64,10 +63,6 @@ OBJ = $(SRC:.c=.o)
 
 OUT = $(OUT_TARGET)
 OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)EcoOS$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET)
-
- 
-# C++ compiler flags (-g -O2 -Wall)
-CCFLAGS = $(CCFLAGS_TARGET) -Wall -O2 -DECO_LINUX -DECO_POSIX -DECO_X86_64
 
 # compiler
 GNU =
@@ -85,19 +80,23 @@ LIBS = -lc -lm -lgcc
  
 # compile flags
 LDFLAGS = $(LDFLAGS_TARGET)
- 
+
+# Флаги компиляции: C89
+# -std=c89: стандарт C89
+# Платформенные макросы для Linux x86_64
+CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -Wno-comment -O2 -DECO_LINUX -DECO_POSIX -DECO_X86_64
+
 .SUFFIXES: .c
 
 all: $(OUT)
 
 .c.o:
 	$(GNU)$(CC) $(INC) $(CCFLAGS) -c $< -o $@
- 
+
 $(OUT): $(OBJ)
 	mkdir -p $(OUT_DIR)
 	$(CMD_TARGET) $(OUT_DIR)$(SLASH)$(OUT) $(OBJ) $(LDFLAGS)
-	rm $(OBJ)
+	$(RM) $(OBJ)
 
 clean:
 	$(RM) $(OBJ) $(OUT_DIR)$(SLASH)$(OUT)
-

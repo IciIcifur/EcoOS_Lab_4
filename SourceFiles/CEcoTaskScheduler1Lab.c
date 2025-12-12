@@ -17,12 +17,12 @@
  *
  */
 
-#include "IEcoBase1.h"
 #include "IEcoSystem1.h"
 #include "IEcoInterfaceBus1.h"
 #include "IEcoInterfaceBus1MemExt.h"
 #include "CEcoTaskScheduler1Lab.h"
 #include "CEcoTask1Lab.h"
+#include "IEcoBase1.h"
 
 /* Выделяем память под один экземпляр */
 CEcoTaskScheduler1Lab_C761620F g_xCEcoTaskScheduler1Lab_C761620F = {0};
