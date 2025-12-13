@@ -84,7 +84,8 @@ LDFLAGS = $(LDFLAGS_TARGET)
 # Флаги компиляции: C89
 # -std=c89: стандарт C89
 # Платформенные макросы для Linux x86_64
-CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -Wno-comment -O2 -DECO_LINUX -DECO_POSIX -DECO_X86_64
+# -DUGUID_UTILITY - для функции UGUID
+CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -Wno-comment -O2 -DECO_LINUX -DECO_POSIX -DECO_X86_64 -DUGUID_UTILITY
 
 .SUFFIXES: .c
 
