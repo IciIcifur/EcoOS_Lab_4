@@ -46,7 +46,7 @@ typedef struct CEcoTaskScheduler1Lab_C761620F {
     IEcoTaskScheduler1VTbl* m_pVTblIScheduler;
 
     /* Счетчик ссылок */
-    uint32_t m_cRef;
+    volatile long m_cRef;
 
     /* Интерфейсная Шина */
     IEcoInterfaceBus1* m_pIBus;

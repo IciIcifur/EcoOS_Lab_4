@@ -19,6 +19,8 @@
 
 #include "CEcoTaskScheduler1Lab.h"
 #include "CEcoTaskScheduler1LabFactory.h"
+#include "atomic.h"
+#include "depend.h"
 
 /*
  *
@@ -59,10 +61,10 @@ static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620FFactory_AddRef(/* in
     CEcoTaskScheduler1Lab_C761620FFactory* pCMe = (CEcoTaskScheduler1Lab_C761620FFactory*)me;
 
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
-    return atomicincrement_int32_t(&pCMe->m_cRef);
+    return (uint32_t)atomicincrement_int32_t((volatile long*)&pCMe->m_cRef);
 }
 
 /*
@@ -80,18 +82,17 @@ static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620FFactory_Release(/* i
     CEcoTaskScheduler1Lab_C761620FFactory* pCMe = (CEcoTaskScheduler1Lab_C761620FFactory*)me;
 
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
     /* Уменьшение счетчика ссылок на компонент */
-    atomicdecrement_int32_t(&pCMe->m_cRef);
+    atomicdecrement_int32_t((volatile long*)&pCMe->m_cRef);
 
     /* В случае обнуления счетчика, освобождение данных экземпляра */
     if ( pCMe->m_cRef == 0 ) {
-        //deleteCEcoTaskScheduler1Lab_C761620FFactory(&pCMe->m_VtblICF);
         return 0;
     }
-    return pCMe->m_cRef;
+    return (uint32_t)pCMe->m_cRef;
 }
 
 /*
@@ -153,7 +154,7 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620FFactory_Alloc(/* in *
 
     /* Инициализация компонента */
     result = me->pVTbl->Init(me, pISystem, pIUnk);
-	
+
     /* Получение указателя на интерфейс */
     result = pIUnk->pVTbl->QueryInterface(pIUnk, riid, ppv);
 
@@ -245,7 +246,7 @@ IEcoComponentFactoryVTbl g_x902ABA722D34417BB714322CC761620FFactoryVTbl = {
  * </сводка>
  *
  * <описание>
- *   Функция 
+ *   Функция
  * </описание>
  *
  */

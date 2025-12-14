@@ -1,0 +1,74 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32"><Configuration>Debug</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32"><Configuration>Release</Configuration><Platform>Win32</Platform></ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{902ABA72-2D34-417B-B714-322CC761620F}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectName>Eco.TaskScheduler1Lab</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType><CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType><CharacterSet>MultiByte</CharacterSet><WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props"/>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(ProjectDir)..\..\..\BuildFiles\EcoOS\windows_x86\DynamicDebug\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\Debug\</IntDir>
+    <TargetName>902ABA722D34417BB714322CC761620F</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(ProjectDir)..\..\..\BuildFiles\EcoOS\windows_x86\DynamicRelease\</OutDir>
+    <IntDir>$(ProjectDir)Intermediate\Release\</IntDir>
+    <TargetName>902ABA722D34417BB714322CC761620F</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel><Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_DEBUG;ECO_WINDOWS;ECO_WIN32;ECO_X86_32;UGUID_UTILITY;CECO_TASKSCHEDULER1LAB_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\HeaderFiles;$(ProjectDir)..\..\..\SharedFiles;$(ECO_FRAMEWORK)\Eco.Core1\SharedFiles;$(ECO_FRAMEWORK)\Eco.System1\SharedFiles;$(ECO_FRAMEWORK)\Eco.Timer1\SharedFiles;$(ECO_FRAMEWORK)\Eco.InterfaceBus1\SharedFiles;$(ECO_FRAMEWORK)\Eco.MemoryManager1\SharedFiles;$(ECO_FRAMEWORK)\Eco.FileSystemManagement1\SharedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation><SubSystem>Windows</SubSystem><TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>if not exist "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F" mkdir "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F"
+copy /Y "$(OutDir)$(TargetName).dll" "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F\$(TargetName).dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel><Optimization>MaxSpeed</Optimization>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;ECO_WINDOWS;ECO_WIN32;ECO_X86_32;UGUID_UTILITY;CECO_TASKSCHEDULER1LAB_EXPORTS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\HeaderFiles;$(ProjectDir)..\..\..\SharedFiles;$(ECO_FRAMEWORK)\Eco.Core1\SharedFiles;$(ECO_FRAMEWORK)\Eco.System1\SharedFiles;$(ECO_FRAMEWORK)\Eco.Timer1\SharedFiles;$(ECO_FRAMEWORK)\Eco.InterfaceBus1\SharedFiles;$(ECO_FRAMEWORK)\Eco.MemoryManager1\SharedFiles;$(ECO_FRAMEWORK)\Eco.FileSystemManagement1\SharedFiles;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation><SubSystem>Windows</SubSystem><TargetMachine>MachineX86</TargetMachine>
+    </Link>
+    <PostBuildEvent>
+      <Command>if not exist "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F" mkdir "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F"
+copy /Y "$(OutDir)$(TargetName).dll" "$(ECO_FRAMEWORK_RT)\902ABA722D34417BB714322CC761620F\$(TargetName).dll"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="$(ProjectDir)..\..\..\SourceFiles\CEcoTask1Lab.c" />
+    <ClCompile Include="$(ProjectDir)..\..\..\SourceFiles\CEcoTaskScheduler1Lab.c" />
+    <ClCompile Include="$(ProjectDir)..\..\..\SourceFiles\CEcoTaskScheduler1LabFactory.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(ProjectDir)..\..\..\HeaderFiles\CEcoTask1Lab.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\HeaderFiles\CEcoTaskScheduler1Lab.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\HeaderFiles\CEcoTaskScheduler1LabFactory.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\SharedFiles\IEcoTaskScheduler1.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\SharedFiles\IEcoTask1.h" />
+    <ClInclude Include="$(ProjectDir)..\..\..\SharedFiles\IdEcoTaskScheduler1Lab.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
+</Project>

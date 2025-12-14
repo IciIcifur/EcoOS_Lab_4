@@ -6,9 +6,13 @@ if "%ECO_FRAMEWORK%"=="" (
   echo [ERROR] ECO_FRAMEWORK is not set.
   exit /b 1
 )
+if "%ECO_FRAMEWORK_RT%"=="" (
+  echo [ERROR] ECO_FRAMEWORK_RT is not set.
+  exit /b 1
+)
 
-REM Собираем DLL
-pushd "..\AssemblyFiles\EcoOS\aarch64_gcc_13_2_1"
+REM Собираем DLL под Win32
+pushd "..\AssemblyFiles\EcoOS\windows_x86"
 call build.bat
 if errorlevel 1 (
   echo [ERROR] build.bat failed
@@ -18,7 +22,7 @@ if errorlevel 1 (
 popd
 
 REM Собираем UnitTest и кладём exe рядом с DLL
-set "OUTDIR=..\BuildFiles\EcoOS\windows_x86_64\DynamicDebug"
+set "OUTDIR=..\BuildFiles\EcoOS\windows_x86\DynamicDebug"
 pushd "."
 make
 if errorlevel 1 (

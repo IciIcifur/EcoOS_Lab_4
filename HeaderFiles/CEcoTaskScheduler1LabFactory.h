@@ -28,7 +28,7 @@ typedef struct CEcoTaskScheduler1Lab_C761620FFactory {
     IEcoComponentFactoryVTbl* m_pVTblICF;
 
     /* Счетчик ссылок */
-    uint32_t m_cRef;
+    volatile long m_cRef;
 
     /* Данные компонентов для фабрики */
     CreateInstance m_pInstance;
