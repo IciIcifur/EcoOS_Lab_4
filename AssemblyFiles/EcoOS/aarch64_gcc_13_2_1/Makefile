@@ -1,22 +1,18 @@
 ifeq ($(OS), Windows_NT)
-	# WINDOWS USE THESE DEFINITIONS (MinGW gcc)
-	RM = del /Q
+	#WINDOWS USE THESE DEFINITIONS
+	RM = del
 	SLASH = \\
-	SWALLOW_OUTPUT = 2>NUL
-	TOOLCHAIN =
-	TOOL =
-	OS_DEFINES = -DECO_WINDOWS -DECO_WIN64
-	MKDIR_OUTDIR = if not exist "$(OUT_DIR)" mkdir "$(OUT_DIR)"
+	SWALLOW_OUTPUT = >nul 2>nul
+	TOOLCHAIN = $(ECO_TOOLCHAIN)$(SLASH)xpack-aarch64-none-elf-gcc-13.2.1-1.1$(SLASH)bin$(SLASH)
+	TOOL = aarch64-none-elf-
 else
-	# LINUX USE THESE DEFINITIONS
-	RM = rm -f
+	#LINUX USE THESE DEFINITIONS
+	RM = -rm -f
 	SLASH = /
-	SWALLOW_OUTPUT = 2>/dev/null
-	TOOLCHAIN =
-	TOOL =
-	OS_DEFINES = -DECO_LINUX -DECO_POSIX
-	MKDIR_OUTDIR = mkdir -p "$(OUT_DIR)"
-endif
+	SWALLOW_OUTPUT =
+	TOOLCHAIN = $(ECO_TOOLCHAIN)$(SLASH)xpack-aarch64-none-elf-gcc-13.2.1-1.1$(SLASH)bin$(SLASH)
+	TOOL = aarch64-none-elf-
+endif 
 
 ifeq ($(TARGET), 1)
 OUT_TARGET = lib902ABA722D34417BB714322CC761620F.a
@@ -24,55 +20,38 @@ ifeq ($(DEBUG), 1)
 CONFIG_TARGET = StaticDebug
 CCFLAGS_TARGET = -Wall -g -DECO_LIB
 LDFLAGS_TARGET =
+ARCH_TARGET = arm64-v8a
 else
 CONFIG_TARGET = StaticRelease
 CCFLAGS_TARGET = -DECO_LIB
 LDFLAGS_TARGET =
+ARCH_TARGET = arm64-v8a
 endif
-else
-ifeq ($(OS), Windows_NT)
-OUT_TARGET = 902ABA722D34417BB714322CC761620F.dll
 else
 OUT_TARGET = 902ABA722D34417BB714322CC761620F.so
-endif
-
 ifeq ($(DEBUG), 1)
 CONFIG_TARGET = DynamicDebug
 CCFLAGS_TARGET = -Wall -fPIC -g -DECO_DLL
-
-ifeq ($(OS), Windows_NT)
-LDFLAGS_TARGET = -shared -Wl,--out-implib,lib902ABA722D34417BB714322CC761620F.a
-else
 LDFLAGS_TARGET = -shared
-endif
+ARCH_TARGET = arm64-v8a
 else
 CONFIG_TARGET = DynamicRelease
 CCFLAGS_TARGET = -fPIC -DECO_DLL
-ifeq ($(OS), Windows_NT)
-LDFLAGS_TARGET = -shared -Wl,--out-implib,lib902ABA722D34417BB714322CC761620F.a
-else
 LDFLAGS_TARGET = -shared
+ARCH_TARGET = arm64-v8a
 endif
-endif
-endif
-
-# ARCH
-ifeq ($(OS), Windows_NT)
-ARCH_TARGET = windows_x86_64
-else
-ARCH_TARGET = x86_64
 endif
 
 # include directories
 INC = \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
 -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.Timer1$(SLASH)SharedFiles" \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles" \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
--I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.Timer1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles \
+-I $(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles 
+
 
 # source files.
 SRC = \
@@ -85,10 +64,14 @@ OBJ = $(SRC:.c=.o)
 OUT = $(OUT_TARGET)
 OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)EcoOS$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET)
 
-# Compiler
-GNU =
-CC = gcc
-AR = gcc-ar
+ 
+# C++ compiler flags (-g -O2 -Wall)
+CCFLAGS = $(CCFLAGS_TARGET) -Wno-missing-braces -march=armv8-a+simd -mtune=cortex-a53 -mstrict-align -fno-tree-loop-vectorize -fno-tree-slp-vectorize -fno-builtin -DECO_OS -DECO_BCM283X -DECO_AARCH64 -DUGUID_UTILITY
+ 
+# compiler
+GNU = $(TOOLCHAIN)
+CC = $(TOOL)gcc
+AR = $(TOOL)gcc-ar
 
 ifeq ($(TARGET), 1)
 CMD_TARGET=$(GNU)$(AR) rcs
@@ -98,23 +81,22 @@ endif
 
 # library paths
 LIBS = -lc -lm -lgcc
-
+ 
 # compile flags
-CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -O2 $(OS_DEFINES) -DECO_X86_64 -DUGUID_UTILITY -DCECO_TASKSCHEDULER1LAB_EXPORTS
 LDFLAGS = $(LDFLAGS_TARGET)
-
+ 
 .SUFFIXES: .c
 
 all: $(OUT)
 
 .c.o:
 	$(GNU)$(CC) $(INC) $(CCFLAGS) -c $< -o $@
-
+ 
 $(OUT): $(OBJ)
-	$(MKDIR_OUTDIR)
-	$(CMD_TARGET) "$(OUT_DIR)$(SLASH)$(OUT)" $(OBJ) $(LDFLAGS)
-	-$(RM) $(OBJ) $(SWALLOW_OUTPUT)
+	if not exist $(OUT_DIR) mkdir $(OUT_DIR)
+	$(CMD_TARGET) $(OUT_DIR)$(SLASH)$(OUT) $(OBJ) $(LDFLAGS)
+	del $(OBJ)
 
 clean:
-	-$(RM) $(OBJ) $(SWALLOW_OUTPUT)
-	-$(RM) "$(OUT_DIR)$(SLASH)$(OUT)" $(SWALLOW_OUTPUT)
+	$(RM) $(OBJ) $(OUT_DIR)$(SLASH)$(OUT)
+
