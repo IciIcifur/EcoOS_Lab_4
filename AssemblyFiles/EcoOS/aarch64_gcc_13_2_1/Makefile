@@ -43,15 +43,7 @@ endif
 endif
 
 # include directories
-INC = \
--I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles \
--I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles \
--I $(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles \
--I $(ECO_FRAMEWORK)$(SLASH)Eco.Timer1$(SLASH)SharedFiles \
--I $(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles \
--I $(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles \
--I $(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles 
-
+INC = -I ..$(SLASH)..$(SLASH)..$(SLASH)HeaderFiles -I ..$(SLASH)..$(SLASH)..$(SLASH)SharedFiles -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" -I "$(ECO_FRAMEWORK)$(SLASH)Eco.System1$(SLASH)SharedFiles" -I "$(ECO_FRAMEWORK)$(SLASH)Eco.Timer1$(SLASH)SharedFiles" -I "$(ECO_FRAMEWORK)$(SLASH)Eco.InterfaceBus1$(SLASH)SharedFiles" -I "$(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" -I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
 
 # source files.
 SRC = \
@@ -74,9 +66,9 @@ CC = $(TOOL)gcc
 AR = $(TOOL)gcc-ar
 
 ifeq ($(TARGET), 1)
-CMD_TARGET=$(GNU)$(AR) rcs
+CMD_TARGET="$(GNU)$(AR)" rcs
 else
-CMD_TARGET=$(GNU)$(CC) -o
+CMD_TARGET="$(GNU)$(CC)" -o
 endif
 
 # library paths
@@ -90,7 +82,7 @@ LDFLAGS = $(LDFLAGS_TARGET)
 all: $(OUT)
 
 .c.o:
-	$(GNU)$(CC) $(INC) $(CCFLAGS) -c $< -o $@
+	"$(GNU)$(CC)" $(INC) $(CCFLAGS) -c $< -o $@
  
 $(OUT): $(OBJ)
 	if not exist $(OUT_DIR) mkdir $(OUT_DIR)
