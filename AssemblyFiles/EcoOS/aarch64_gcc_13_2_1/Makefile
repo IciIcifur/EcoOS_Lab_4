@@ -1,18 +1,20 @@
 ifeq ($(OS), Windows_NT)
-	#WINDOWS USE THESE DEFINITIONS
+	# WINDOWS USE THESE DEFINITIONS (MinGW gcc)
 	RM = -rm -f
 	SLASH = \\
-	SWALLOW_OUTPUT = >nul 2>nul
-	TOOLCHAIN = $(ECO_TOOLCHAIN)$(SLASH)xpack-aarch64-none-elf-gcc-13.2.1-1.1$(SLASH)bin$(SLASH)
-	TOOL = aarch64-none-elf-
+	SWALLOW_OUTPUT =
+	TOOLCHAIN =
+	TOOL =
+	OS_DEFINES = -DECO_WINDOWS -DECO_WIN64
 else
-	#LINUX USE THESE DEFINITIONS
+	# LINUX USE THESE DEFINITIONS
 	RM = -rm -f
 	SLASH = /
 	SWALLOW_OUTPUT =
 	TOOLCHAIN =
 	TOOL =
-endif 
+	OS_DEFINES = -DECO_LINUX -DECO_POSIX
+endif
 
 ifeq ($(TARGET), 1)
 OUT_TARGET = lib902ABA722D34417BB714322CC761620F.a
@@ -20,26 +22,43 @@ ifeq ($(DEBUG), 1)
 CONFIG_TARGET = StaticDebug
 CCFLAGS_TARGET = -Wall -g -DECO_LIB
 LDFLAGS_TARGET =
-ARCH_TARGET = x86_64
 else
 CONFIG_TARGET = StaticRelease
 CCFLAGS_TARGET = -DECO_LIB
 LDFLAGS_TARGET =
-ARCH_TARGET = x86_64
 endif
 else
+ifeq ($(OS), Windows_NT)
+OUT_TARGET = 902ABA722D34417BB714322CC761620F.dll
+else
 OUT_TARGET = 902ABA722D34417BB714322CC761620F.so
+endif
+
 ifeq ($(DEBUG), 1)
 CONFIG_TARGET = DynamicDebug
 CCFLAGS_TARGET = -Wall -fPIC -g -DECO_DLL
+
+ifeq ($(OS), Windows_NT)
+LDFLAGS_TARGET = -shared -Wl,--out-implib,lib902ABA722D34417BB714322CC761620F.a
+else
 LDFLAGS_TARGET = -shared
-ARCH_TARGET = x86_64
+endif
 else
 CONFIG_TARGET = DynamicRelease
 CCFLAGS_TARGET = -fPIC -DECO_DLL
+ifeq ($(OS), Windows_NT)
+LDFLAGS_TARGET = -shared -Wl,--out-implib,lib902ABA722D34417BB714322CC761620F.a
+else
 LDFLAGS_TARGET = -shared
-ARCH_TARGET = x86_64
 endif
+endif
+endif
+
+# ARCH
+ifeq ($(OS), Windows_NT)
+ARCH_TARGET = windows_x86_64
+else
+ARCH_TARGET = x86_64
 endif
 
 # include directories
@@ -64,7 +83,7 @@ OBJ = $(SRC:.c=.o)
 OUT = $(OUT_TARGET)
 OUT_DIR = ..$(SLASH)..$(SLASH)..$(SLASH)BuildFiles$(SLASH)EcoOS$(SLASH)$(ARCH_TARGET)$(SLASH)$(CONFIG_TARGET)
 
-# compiler
+# Compiler
 GNU =
 CC = gcc
 AR = gcc-ar
@@ -77,15 +96,10 @@ endif
 
 # library paths
 LIBS = -lc -lm -lgcc
- 
-# compile flags
-LDFLAGS = $(LDFLAGS_TARGET)
 
-# Флаги компиляции: C89
-# -std=c89: стандарт C89
-# Платформенные макросы для Linux x86_64
-# -DUGUID_UTILITY - для функции UGUID
-CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -Wno-comment -O2 -DECO_LINUX -DECO_POSIX -DECO_X86_64 -DUGUID_UTILITY
+# compile flags
+CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -O2 $(OS_DEFINES) -DECO_X86_64 -DUGUID_UTILITY
+LDFLAGS = $(LDFLAGS_TARGET)
 
 .SUFFIXES: .c
 
