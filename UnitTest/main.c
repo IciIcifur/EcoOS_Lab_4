@@ -21,7 +21,8 @@ int main(void) {
         printf("Init OK\n");
     }
 
-    /* Tests here */
+    pSched->pVTbl->AddRef(pSched);
+    pSched->pVTbl->Release(pSched);
 
     pSched->pVTbl->Release(pSched);
     printf("Release OK\n");

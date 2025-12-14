@@ -1,19 +1,21 @@
 ifeq ($(OS), Windows_NT)
 	# WINDOWS USE THESE DEFINITIONS (MinGW gcc)
-	RM = -rm -f
+	RM = del /Q
 	SLASH = \\
-	SWALLOW_OUTPUT =
+	SWALLOW_OUTPUT = 2>NUL
 	TOOLCHAIN =
 	TOOL =
 	OS_DEFINES = -DECO_WINDOWS -DECO_WIN64
+	MKDIR_OUTDIR = if not exist "$(OUT_DIR)" mkdir "$(OUT_DIR)"
 else
 	# LINUX USE THESE DEFINITIONS
-	RM = -rm -f
+	RM = rm -f
 	SLASH = /
-	SWALLOW_OUTPUT =
+	SWALLOW_OUTPUT = 2>/dev/null
 	TOOLCHAIN =
 	TOOL =
 	OS_DEFINES = -DECO_LINUX -DECO_POSIX
+	MKDIR_OUTDIR = mkdir -p "$(OUT_DIR)"
 endif
 
 ifeq ($(TARGET), 1)
@@ -98,7 +100,7 @@ endif
 LIBS = -lc -lm -lgcc
 
 # compile flags
-CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -O2 $(OS_DEFINES) -DECO_X86_64 -DUGUID_UTILITY
+CCFLAGS = $(CCFLAGS_TARGET) -std=gnu89 -Wall -Wextra -O2 $(OS_DEFINES) -DECO_X86_64 -DUGUID_UTILITY -DCECO_TASKSCHEDULER1LAB_EXPORTS
 LDFLAGS = $(LDFLAGS_TARGET)
 
 .SUFFIXES: .c
@@ -109,9 +111,10 @@ all: $(OUT)
 	$(GNU)$(CC) $(INC) $(CCFLAGS) -c $< -o $@
 
 $(OUT): $(OBJ)
-	mkdir -p $(OUT_DIR)
-	$(CMD_TARGET) $(OUT_DIR)$(SLASH)$(OUT) $(OBJ) $(LDFLAGS)
-	$(RM) $(OBJ)
+	$(MKDIR_OUTDIR)
+	$(CMD_TARGET) "$(OUT_DIR)$(SLASH)$(OUT)" $(OBJ) $(LDFLAGS)
+	-$(RM) $(OBJ) $(SWALLOW_OUTPUT)
 
 clean:
-	$(RM) $(OBJ) $(OUT_DIR)$(SLASH)$(OUT)
+	-$(RM) $(OBJ) $(SWALLOW_OUTPUT)
+	-$(RM) "$(OUT_DIR)$(SLASH)$(OUT)" $(SWALLOW_OUTPUT)

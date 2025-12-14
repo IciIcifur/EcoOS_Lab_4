@@ -1,22 +1,18 @@
 ifeq ($(OS), Windows_NT)
-	#WINDOWS USE THESE DEFINITIONS
-	RM = -rm -f
+	RM = del /Q
 	SLASH = \\
-	SWALLOW_OUTPUT = >nul 2>nul
-	TOOLCHAIN = $(ECO_TOOLCHAIN)$(SLASH)xpack-aarch64-none-elf-gcc-13.2.1-1.1$(SLASH)bin$(SLASH)
-	TOOL = aarch64-none-elf-
+	NULLDEV = NUL
+	EXEEXT = .exe
 else
-	#LINUX USE THESE DEFINITIONS
-	RM = -rm -f
+	RM = rm -f
 	SLASH = /
-	SWALLOW_OUTPUT =
-	TOOLCHAIN =
-	TOOL =
+	NULLDEV = /dev/null
+	EXEEXT =
 endif
 
 CC := gcc
 CFLAGS := -std=gnu89 -Wall -Wextra -O2 \
-	-DECO_LINUX -DECO_POSIX -DECO_X86_64 -DUGUID_UTILITY \
+	-DECO_WINDOWS -DECO_WIN64 -DECO_X86_64 -DUGUID_UTILITY \
 	-I ..$(SLASH)HeaderFiles \
 	-I ..$(SLASH)SharedFiles \
 	-I "$(ECO_FRAMEWORK)$(SLASH)Eco.Core1$(SLASH)SharedFiles" \
@@ -26,20 +22,23 @@ CFLAGS := -std=gnu89 -Wall -Wextra -O2 \
 	-I "$(ECO_FRAMEWORK)$(SLASH)Eco.MemoryManager1$(SLASH)SharedFiles" \
 	-I "$(ECO_FRAMEWORK)$(SLASH)Eco.FileSystemManagement1$(SLASH)SharedFiles"
 
-LIBDIR := ../BuildFiles/EcoOS/x86_64/StaticDebug
-LIBS := -L "$(LIBDIR)" -l902ABA722D34417BB714322CC761620F
+OUTDIR := ..$(SLASH)BuildFiles$(SLASH)EcoOS$(SLASH)windows_x86_64$(SLASH)DynamicDebug
+LIBS := -L "$(OUTDIR)" -l902ABA722D34417BB714322CC761620F
 
 SRC := main.c
 OBJ := $(SRC:.c=.o)
-BIN := lab4_unit_test.exe
+BIN := lab4_unit_test$(EXEEXT)
 
-all: $(BIN)
+.PHONY: all clean
 
-$(BIN): $(OBJ)
-	$(CC) $(OBJ) -o $(BIN) $(LIBS)
+all: $(OUTDIR)$(SLASH)$(BIN)
+
+$(OUTDIR)$(SLASH)$(BIN): $(OBJ)
+	$(CC) $(OBJ) -o "$(OUTDIR)$(SLASH)$(BIN)" $(LIBS)
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	-rm -f $(OBJ) $(BIN)
+	-$(RM) $(OBJ) 2>$(NULLDEV)
+	-$(RM) "$(OUTDIR)$(SLASH)$(BIN)" 2>$(NULLDEV)

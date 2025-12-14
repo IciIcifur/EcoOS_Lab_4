@@ -24,18 +24,21 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM Путь к DLL
 set "OUT_DLL=..\..\..\BuildFiles\EcoOS\windows_x86_64\DynamicDebug\902ABA722D34417BB714322CC761620F.dll"
 if not exist "%OUT_DLL%" (
   echo [ERROR] Built DLL not found: %OUT_DLL%
   exit /b 1
 )
 
-REM Папка рантайма по CID
 set "RT_DIR=%ECO_FRAMEWORK_RT%\902ABA722D34417BB714322CC761620F"
-if not exist "%RT_DIR%" mkdir "%RT_DIR%"
+if not exist "%RT_DIR%" (
+  mkdir "%RT_DIR%"
+  if errorlevel 1 (
+    echo [ERROR] Could not create RT_DIR: %RT_DIR%
+    exit /b 1
+  )
+)
 
-REM Копирование DLL
 xcopy /Y "%OUT_DLL%" "%RT_DIR%"
 if errorlevel 1 (
   echo [ERROR] Copy failed
