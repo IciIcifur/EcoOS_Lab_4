@@ -72,7 +72,7 @@ uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_AddRef(/* in */ IEcoTask1Ptr_t me) 
 
     /* Проверка указателя */
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
     return ++pCMe->m_cRef;
@@ -94,7 +94,7 @@ uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Release(/* in */ IEcoTask1Ptr_t me)
 
     /* Проверка указателя */
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
     /* Уменьшение счетчика ссылок на компонент */
@@ -160,4 +160,3 @@ IEcoTask1VTbl g_x81A466F4C27540B1B33D0661E5470F1BVTbl_C761620F = {
     CEcoTask1Lab_C761620F_Delay,
     CEcoTask1Lab_C761620F_Yield
 };
-

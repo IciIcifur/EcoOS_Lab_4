@@ -24,6 +24,55 @@
 #include "CEcoTask1Lab.h"
 #include "IEcoBase1.h"
 
+/* ===================== FCFS минимальная реализация без вытеснения ===================== */
+/* Реализуем простую внутреннюю очередь FIFO, в которую NewTask добавляет задачи
+   (указатели на функции), а Start последовательно выполняет их в порядке добавления
+   и завершает работу, когда очередь опустеет. Это соответствует FCFS без вытеснения. */
+
+
+typedef void (*EcoTaskFunc)(void);
+#define FCFS_QUEUE_MAX 64
+
+typedef struct {
+    EcoTaskFunc fn;
+    void*       data;
+    uint32_t    stackSize;
+    IEcoTask1*  pITask;
+} FCFS_TaskItem;
+
+typedef struct {
+    FCFS_TaskItem items[FCFS_QUEUE_MAX];
+    uint32_t head;
+    uint32_t tail;
+    uint32_t count;
+} FCFS_Queue;
+
+static void FCFS_Init(FCFS_Queue* q) {
+    q->head = q->tail = q->count = 0;
+}
+static int FCFS_Push(FCFS_Queue* q, EcoTaskFunc fn, void* data, uint32_t stackSize, IEcoTask1* pITask) {
+    if (q->count >= FCFS_QUEUE_MAX) {
+        return -1; /* overflow */
+    }
+    q->items[q->tail].fn = fn;
+    q->items[q->tail].data = data;
+    q->items[q->tail].stackSize = stackSize;
+    q->items[q->tail].pITask = pITask;
+    q->tail = (q->tail + 1) % FCFS_QUEUE_MAX;
+    q->count++;
+    return 0;
+}
+static int FCFS_Pop(FCFS_Queue* q, FCFS_TaskItem* out) {
+    if (q->count == 0) {
+        return -1; /* empty */
+    }
+    *out = q->items[q->head];
+    q->head = (q->head + 1) % FCFS_QUEUE_MAX;
+    q->count--;
+    return 0;
+}
+
+
 /* Выделяем память под один экземпляр */
 CEcoTaskScheduler1Lab_C761620F g_xCEcoTaskScheduler1Lab_C761620F = {0};
 
@@ -40,6 +89,13 @@ uint64_t * volatile g_pxCurrentTCB_C761620F = 0;
 
 uint64_t g_indx = 0;
 
+typedef struct CEcoTaskScheduler1Lab_State {
+    FCFS_Queue queue;
+    int initialized;
+} CEcoTaskScheduler1Lab_State;
+
+static CEcoTaskScheduler1Lab_State g_state = {0};
+
 /*
  *
  * <сводка>
@@ -47,7 +103,7 @@ uint64_t g_indx = 0;
  * </сводка>
  *
  * <описание>
- *   Функция 
+ *   Функция
  * </описание>
  *
  */
@@ -74,7 +130,7 @@ uint64_t g_indx = 0;
  * </сводка>
  *
  * <описание>
- *   Функция 
+ *   Функция
  * </описание>
  *
  */
@@ -139,7 +195,7 @@ void CEcoTaskScheduler1Lab_C761620F_TimerHandler(void) {
     //"LDP 	X0, X1, [SP], #0x10 \n"
     //"ERET \n"
     //);
-    
+
 }
 
 
@@ -194,7 +250,7 @@ static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_AddRef(/* in */ IEc
 
     /* Проверка указателя */
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
     return atomicincrement_int32_t(&pCMe->m_cRef);
@@ -216,7 +272,7 @@ static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Release(/* in */ IE
 
     /* Проверка указателя */
     if (me == 0 ) {
-        return -1;
+        return (uint32_t)-1;
     }
 
     /* Уменьшение счетчика ссылок на компонент */
@@ -245,9 +301,15 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Init(/*in*/IEcoTaskS
     /*CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;*/
 
     /* Проверка указателей */
-    if (me == 0 || pIBus == 0) {
+    /* Для Windows юнит-теста просто инициализируем очередь */
+    if (me == 0) {
         return -1;
     }
+
+    FCFS_Init(&g_state.queue);
+    g_state.initialized = 1;
+
+    (void)pIBus;
 
     return 0;
 }
@@ -276,6 +338,10 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_InitWith(/*in*/ IEco
     pCMe->m_pTaskList = g_xCEcoTask1List_C761620F;
     pCMe->m_pIBus = pIBus;
 
+    /* Инициализация FCFS-очереди */
+    FCFS_Init(&g_state.queue);
+    g_state.initialized = 1;
+
     /* Получение интерфейса для работы с программируемым таймером */
     result = pCMe->m_pIBus->pVTbl->QueryComponent(pCMe->m_pIBus, &CID_EcoTimer1, 0, &IID_IEcoTimer1, (void**) &pCMe->m_pIArmTimer);
     /* Проверка */
@@ -285,7 +351,7 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_InitWith(/*in*/ IEco
 
     /* Установка обработчика прерывания программируемого таймера */
     pCMe->m_pIArmTimer->pVTbl->set_Interval(pCMe->m_pIArmTimer, 1000000);
-    pCMe->m_pIArmTimer->pVTbl->set_IrqHandler(pCMe->m_pIArmTimer, (voidptr_t*)CEcoTaskScheduler1Lab_C761620F_TimerHandler);
+    pCMe->m_pIArmTimer->pVTbl->set_IrqHandler(pCMe->m_pIArmTimer, CEcoTaskScheduler1Lab_C761620F_TimerHandler);
 
     return 0;
 }
@@ -311,20 +377,43 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_NewTask(/*in*/ IEcoT
     if (me == 0 ) {
         return -1;
     }
+    if (g_state.initialized == 0) {
+        return -1;
+    }
 
+    /* FCFS: добавляем задачу в внутреннюю очередь */
+    {
+        EcoTaskFunc fn = (EcoTaskFunc)address;
+        IEcoTask1* pITask = 0;
+        if (fn == NULL) {
+            return -1;
+        }
+        /* Возвращаем NULL как IEcoTask1 */
+        if (ppITask != 0) {
+            *ppITask = NULL;
+        }
+        if (FCFS_Push(&g_state.queue, fn, (void*)data, stackSize, pITask) != 0) {
+            return -1;
+        }
+        return 0;
+    }
+
+    /* ===== (не используем в Windows FCFS) ===== */
     /* Проверяем указатель пула статических задач */
     for (indx = 0; indx < 3; indx++) {
         if (g_xCEcoTask1List_C761620F[indx].pfunc == 0) {
             g_xCEcoTask1List_C761620F[indx].pfunc = address;
             g_xCEcoTask1List_C761620F[indx].m_cRef = 1;
             g_xCEcoTask1List_C761620F[indx].m_sp = (byte_t*)&g_xCEcoStackTask1List_C761620F[indx*4096];
-            pxTopOfStack = g_xCEcoTask1List_C761620F[indx].m_sp;
+            pxTopOfStack = (uint64_t*)g_xCEcoTask1List_C761620F[indx].m_sp;
             while (reg > 0) {
                 pxTopOfStack--;
                 reg--;
             }
             *pxTopOfStack = (uint64_t)g_xCEcoTask1List_C761620F[indx].pfunc;
-            *ppITask = (IEcoTask1*)&g_xCEcoTask1List_C761620F[indx];
+            if (ppITask) {
+                *ppITask = (IEcoTask1*)&g_xCEcoTask1List_C761620F[indx];
+            }
             return 0;
             break;
         }
@@ -461,6 +550,19 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Start(/*in*/ IEcoTas
         return -1;
     }
 
+    /* ===== FCFS без вытеснения =====
+       Последовательно извлекаем задачи из очереди и вызываем их.
+       По завершении очереди выходим из Start (возвращаем 0). */
+    if (g_state.initialized) {
+        FCFS_TaskItem item;
+        while (FCFS_Pop(&g_state.queue, &item) == 0) {
+            if (item.fn) {
+                item.fn();
+            }
+        }
+        return 0;
+    }
+
     /* Запускаем таймер */
     //pCMe->m_pIArmTimer->pVTbl->Start(pCMe->m_pIArmTimer);
     g_pxCurrentTCB_C761620F = (uint64_t*)&pCMe->m_pTaskList[0];
@@ -526,6 +628,11 @@ int16_t ECOCALLMETHOD initCEcoTaskScheduler1Lab_C761620F(/*in*/ IEcoTaskSchedule
         return -1;
     }
 
+    /* Инициализируем FCFS очередь */
+    FCFS_Init(&g_state.queue);
+    g_state.initialized = 1;
+
+    (void)pIUnkSystem;
     return 0;
 }
 
@@ -576,12 +683,18 @@ int16_t ECOCALLMETHOD createCEcoTaskScheduler1Lab_C761620F(/* in */ IEcoUnknown*
         /* Создание таблицы функций интерфейса IEcoTaskScheduler1 */
         pCMe->m_pVTblIScheduler = &g_x155C975395654F85B9AA27D5F377A79EVTbl_C761620F;
 
+        /* Инициализация очереди FCFS */
+        FCFS_Init(&g_state.queue);
+        g_state.initialized = 1;
+
         result = 0;
     }
 
     /* Возврат указателя на интерфейс */
     *ppITaskScheduler = (IEcoTaskScheduler1*)pCMe;
 
+    (void)pIUnkSystem;
+    (void)pIUnkOuter;
     return result;
 }
 
