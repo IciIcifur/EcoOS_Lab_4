@@ -4,14 +4,14 @@
  * </кодировка символов>
  *
  * <сводка>
- *   CEcoTaskScheduler1Lab_C761620F - FCFS без вытеснения (run-to-completion)
+ *   FCFS без вытеснения
  * </сводка>
  *
  * <описание>
  *   Задачи исполняются по порядку регистрации (First-Come, First-Served)
- *   без вытеснения. Каждая задача вызывается ровно один раз (run-to-completion),
+ *   без вытеснения. Каждая задача вызывается ровно один раз,
  *   после чего помечается завершённой (pfunc=0) и больше не вызывается.
- *   По завершении всех задач планировщик уходит в idle-петлю.
+ *   По завершении всех задач планировщик ожидает поступлений новых задач.
  * </описание>
  *
  * <автор>
@@ -31,26 +31,41 @@
 /* Максимум задач */
 #define MAX_STATIC_TASK_COUNT 3
 
-/* Экземпляр планировщика (в инициализированных данных) */
+/* Экземпляр планировщика */
 CEcoTaskScheduler1Lab_C761620F g_xCEcoTaskScheduler1Lab_C761620F = {0};
 
-/* Пул задач (базовый TCB из CEcoTask1Lab.h) */
+/* Пул задач */
 static CEcoTask1Lab_C761620F g_xCEcoTask1List_C761620F[MAX_STATIC_TASK_COUNT] = {0};
 
-/* Пул стеков: по 4096 uint64_t (32KB) на задачу */
+/* Пул стеков */
 #define MAX_STATIC_STACK_TASK_COUNT   (4096 * MAX_STATIC_TASK_COUNT)
 static uint64_t g_xCEcoStackTask1List_C761620F[MAX_STATIC_STACK_TASK_COUNT] = {0};
 
-/* Локальное состояние планировщика (без изменения заголовка): число зарегистрированных задач */
+/* Локальное состояние планировщика */
 static uint32_t g_TaskCount = 0;
 static volatile uint32_t g_NewTaskPending = 0;
 
 /* ================= базовые методы ================= */
+/*
+ *
+ * <сводка>
+ *   Функция QueryInterface
+ * </сводка>
+ *
+ * <описание>
+ *   Функция QueryInterface для интерфейса IEcoTaskScheduler1Lab
+ * </описание>
+ *
+ */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_QueryInterface(IEcoTaskScheduler1Ptr_t me, const UGUID* riid, void** ppv) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
+
+    /* Проверка указателей */
     if (me == 0 || ppv == 0) {
         return ERR_ECO_POINTER;
     }
+
+    /* Проверка и получение запрошенного интерфейса */
     if ( IsEqualUGUID(riid, &IID_IEcoTaskScheduler1) ) {
         *ppv = &pCMe->m_pVTblIScheduler;
         pCMe->m_pVTblIScheduler->AddRef((IEcoTaskScheduler1*)pCMe);
@@ -60,20 +75,46 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_QueryInterface(IEcoT
     return ERR_ECO_NOINTERFACE;
 }
 
+/*
+ *
+ * <сводка>
+ *   Функция AddRef
+ * </сводка>
+ *
+ * <описание>
+ *   Функция AddRef для интерфейса IEcoTaskScheduler1Lab
+ * </описание>
+ *
+ */
 static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_AddRef(IEcoTaskScheduler1Ptr_t me) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
+    /* Проверка указателя */
     if (me == 0 ) {
         return (uint32_t)-1;
     }
     return atomicincrement_int32_t(&pCMe->m_cRef);
 }
 
+/*
+ *
+ * <сводка>
+ *   Функция Release
+ * </сводка>
+ *
+ * <описание>
+ *   Функция Release для интерфейса IEcoTaskScheduler1Lab
+ * </описание>
+ *
+ */
 static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Release(IEcoTaskScheduler1Ptr_t me) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
+    /* Проверка указателя */
     if (me == 0 ) {
         return (uint32_t)-1;
     }
+    /* Уменьшение счетчика ссылок на компонент */
     atomicdecrement_int32_t(&pCMe->m_cRef);
+    /* В случае обнуления счетчика, освобождение данных экземпляра */
     if (pCMe->m_cRef == 0) {
         deleteCEcoTaskScheduler1Lab_C761620F((IEcoTaskScheduler1*)pCMe);
         return 0;
@@ -81,17 +122,41 @@ static uint32_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Release(IEcoTaskSch
     return pCMe->m_cRef;
 }
 
+/*
+ *
+ * <сводка>
+ *   Функция Init
+ * </сводка>
+ *
+ * <описание>
+ *   Функция
+ * </описание>
+ *
+ */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Init(IEcoTaskScheduler1Ptr_t me, IEcoInterfaceBus1Ptr_t pIBus) {
+    /* Проверка указателей */
     if (me == 0 || pIBus == 0) {
         return -1;
     }
     return 0;
 }
 
+/*
+ *
+ * <сводка>
+ *   Функция InitWith
+ * </сводка>
+ *
+ * <описание>
+ *   Функция
+ * </описание>
+ *
+ */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_InitWith(IEcoTaskScheduler1Ptr_t me, IEcoInterfaceBus1Ptr_t pIBus, voidptr_t heapStartAddress, uint32_t size) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
     int16_t result;
 
+    /* Проверка указателей */
     if (me == 0 || pIBus == 0) {
         return -1;
     }
@@ -102,9 +167,9 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_InitWith(IEcoTaskSch
     pCMe->m_pIArmTimer = 0;
     g_TaskCount = 0;
 
-    /* Таймер для невытесняющего режима не требуется (получим интерфейс, но не запускаем) */
+    /* Получение интерфейса для работы с программируемым таймером */
     result = pCMe->m_pIBus->pVTbl->QueryComponent(pCMe->m_pIBus, &CID_EcoTimer1, 0, &IID_IEcoTimer1, (void**)&pCMe->m_pIArmTimer);
-    (void)result; /* не используем */
+    (void)result; // не нужен
 
     return 0;
 }
@@ -124,6 +189,7 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_InitWith(IEcoTaskSch
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_NewTask(IEcoTaskScheduler1Ptr_t me, voidptr_t address, voidptr_t data, uint32_t stackSize, IEcoTask1** ppITask) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
 
+    /* Проверка указателей */
     if (me == 0 || ppITask == 0 || address == 0) {
         return -1;
     }
@@ -146,8 +212,19 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_NewTask(IEcoTaskSche
     return -1;
 }
 
+/*
+ *
+ * <сводка>
+ *   Функция DeleteTask
+ * </сводка>
+ *
+ * <описание>
+ *   Функция
+ * </описание>
+ *
+ */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_DeleteTask(IEcoTaskScheduler1Ptr_t me, uint16_t taskId) {
-    /* Для совместимости: пометить задачу завершённой */
+    /* Проверка указателей */
     if (me == 0) {
         return -1;
     }
@@ -158,6 +235,10 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_DeleteTask(IEcoTaskS
     return -1;
 }
 
+
+/* ================= методы планировщика ================= */
+
+/* не востребованные без вытеснения методы */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_SuspendTask(IEcoTaskScheduler1Ptr_t me, uint16_t taskId) { return 0; }
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_ResumeTask(IEcoTaskScheduler1Ptr_t me, uint16_t taskId) { return 0; }
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_RegisterInterrupt(IEcoTaskScheduler1Ptr_t me, uint16_t number, voidptr_t handlerAddress, int32_t flag) { return 0; }
@@ -170,26 +251,23 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_UnRegisterInterrupt(
  * </сводка>
  *
  * <описание>
- *   FCFS run-to-completion: задача вызывается один раз и помечается завершённой.
- *   После завершения всех задач — idle-петля.
+ *   FCFS: задача вызывается один раз и помечается завершённой.
  * </описание>
  *
  */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Start(IEcoTaskScheduler1Ptr_t me) {
     CEcoTaskScheduler1Lab_C761620F* pCMe = (CEcoTaskScheduler1Lab_C761620F*)me;
+    /* Проверка указателей */
     if (me == 0) {
         return -1;
     }
 
+    /* Передаем управление задаче */
     while (1) {
         uint32_t dispatched = 0;
 
-        /* Важно: сканируем весь пул слева направо — это FCFS по индексу
-           (индекс назначается по первому свободному месту при регистрации) */
         for (uint32_t idx = 0; idx < MAX_STATIC_TASK_COUNT; idx++) {
             if (pCMe->m_pTaskList[idx].pfunc != 0) {
-                /* Снимем указатель, чтобы защититься от повторного вызова,
-                   затем вызовем задачу run-to-completion */
                 void (*task_entry)(void) = pCMe->m_pTaskList[idx].pfunc;
                 pCMe->m_pTaskList[idx].pfunc = 0;
                 dispatched++;
@@ -198,8 +276,6 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Start(IEcoTaskSchedu
         }
 
         if (dispatched == 0) {
-            /* Нет работы — «дремлем» и снова сканируем
-               (можно заменить на wfi, если точно есть событие для пробуждения) */
             if (g_NewTaskPending == 0) {
                 asm volatile ("NOP\n\t" ::: "memory");
             }
@@ -208,7 +284,6 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Start(IEcoTaskSchedu
     }
 }
 
-/* Таймер не используется в невытесняющем варианте */
 void CEcoTaskScheduler1Lab_C761620F_TimerHandler(void) {}
 
 /*
@@ -216,8 +291,14 @@ void CEcoTaskScheduler1Lab_C761620F_TimerHandler(void) {}
  * <сводка>
  *   Функция Stop
  * </сводка>
+ *
+ * <описание>
+ *   Функция
+ * </описание>
+ *
  */
 static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Stop(IEcoTaskScheduler1Ptr_t me) {
+    /* Проверка указателей */
     if (me == 0) {
         return -1;
     }
@@ -227,17 +308,23 @@ static int16_t ECOCALLMETHOD CEcoTaskScheduler1Lab_C761620F_Stop(IEcoTaskSchedul
 /*
  *
  * <сводка>
- *   Функция Init экземпляра
+ *   Функция Init
  * </сводка>
+ *
+ * <описание>
+ *   Функция инициализации экземпляра
+ * </описание>
+ *
  */
 int16_t ECOCALLMETHOD initCEcoTaskScheduler1Lab_C761620F(IEcoTaskScheduler1Ptr_t me, IEcoUnknown *pIUnkSystem) {
+    /* Проверка указателей */
     if (me == 0) {
         return -1;
     }
     return 0;
 }
 
-/* Таблица функций IEcoTaskScheduler1 */
+/* Create Virtual Table IEcoTaskScheduler1Lab */
 IEcoTaskScheduler1VTbl g_x155C975395654F85B9AA27D5F377A79EVTbl_C761620F = {
     CEcoTaskScheduler1Lab_C761620F_QueryInterface,
     CEcoTaskScheduler1Lab_C761620F_AddRef,
@@ -259,23 +346,32 @@ IEcoTaskScheduler1VTbl g_x155C975395654F85B9AA27D5F377A79EVTbl_C761620F = {
  * <сводка>
  *   Функция Create
  * </сводка>
+ *
+ * <описание>
+ *   Функция создания экземпляра
+ * </описание>
+ *
  */
 int16_t ECOCALLMETHOD createCEcoTaskScheduler1Lab_C761620F(IEcoUnknown* pIUnkSystem, IEcoUnknown* pIUnkOuter, IEcoTaskScheduler1Ptr_t* ppITaskScheduler) {
     int16_t result = -1;
     CEcoTaskScheduler1Lab_C761620F* pCMe = 0;
 
+    /* Проверка указателей */
     if (ppITaskScheduler == 0) {
         return result;
     }
 
+    /* Получение указателя на структуру компонента расположенной в области инициализированных данных */
     pCMe = &g_xCEcoTaskScheduler1Lab_C761620F;
 
     if (pCMe->m_cRef == 0) {
+        /* Установка счетчика ссылок на компонент */
         pCMe->m_cRef = 1;
+        /* Создание таблицы функций интерфейса IEcoTaskScheduler1 */
         pCMe->m_pVTblIScheduler = &g_x155C975395654F85B9AA27D5F377A79EVTbl_C761620F;
         result = 0;
     }
-
+    /* Возврат указателя на интерфейс */
     *ppITaskScheduler = (IEcoTaskScheduler1*)pCMe;
     return result;
 }
@@ -285,7 +381,11 @@ int16_t ECOCALLMETHOD createCEcoTaskScheduler1Lab_C761620F(IEcoUnknown* pIUnkSys
  * <сводка>
  *   Функция Delete
  * </сводка>
+ *
+ * <описание>
+ *   Функция освобождения экземпляра
+ * </описание>
+ *
  */
 void ECOCALLMETHOD deleteCEcoTaskScheduler1Lab_C761620F(IEcoTaskScheduler1Ptr_t pITaskScheduler) {
-    /* Статический экземпляр — освобождать нечего */
 }
