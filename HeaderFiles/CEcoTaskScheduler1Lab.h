@@ -26,27 +26,13 @@
 #include "IdEcoTimer1.h"
 #include "IdEcoMemoryManager1.h"
 
-#if defined(_WIN32) || defined(_WIN64)
-  #ifdef CECO_TASKSCHEDULER1LAB_EXPORTS
-    #define ECO_API __declspec(dllexport)
-  #else
-    #define ECO_API __declspec(dllimport)
-  #endif
-#else
-  #define ECO_API
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct CEcoTaskScheduler1Lab_C761620F {
 
     /* Таблица функций интерфейса IEcoTaskScheduler1Lab */
     IEcoTaskScheduler1VTbl* m_pVTblIScheduler;
 
     /* Счетчик ссылок */
-    volatile long m_cRef;
+    uint32_t m_cRef;
 
     /* Интерфейсная Шина */
     IEcoInterfaceBus1* m_pIBus;
@@ -64,14 +50,10 @@ typedef struct CEcoTaskScheduler1Lab_C761620F {
 } CEcoTaskScheduler1Lab_C761620F, *CEcoTaskScheduler1Lab_C761620FPtr;
 
 /* Инициализация экземпляра */
-ECO_API int16_t ECOCALLMETHOD initCEcoTaskScheduler1Lab_C761620F(/*in*/ IEcoTaskScheduler1Ptr_t me, /* in */ IEcoUnknown* pIUnkSystem);
+int16_t ECOCALLMETHOD initCEcoTaskScheduler1Lab_C761620F(/*in*/ IEcoTaskScheduler1Ptr_t me, /* in */ IEcoUnknown* pIUnkSystem);
 /* Создание экземпляра */
-ECO_API int16_t ECOCALLMETHOD createCEcoTaskScheduler1Lab_C761620F(/* in */ IEcoUnknown* pIUnkSystem, /* in */ IEcoUnknown* pIUnkOuter, /* out */ IEcoTaskScheduler1Ptr_t* ppITaskScheduler);
+int16_t ECOCALLMETHOD createCEcoTaskScheduler1Lab_C761620F(/* in */ IEcoUnknown* pIUnkSystem, /* in */ IEcoUnknown* pIUnkOuter, /* out */ IEcoTaskScheduler1Ptr_t* ppITaskScheduler);
 /* Удаление */
-ECO_API void ECOCALLMETHOD deleteCEcoTaskScheduler1Lab_C761620F(/* in */ IEcoTaskScheduler1Ptr_t pITaskScheduler);
-
-#ifdef __cplusplus
-}
-#endif
+void ECOCALLMETHOD deleteCEcoTaskScheduler1Lab_C761620F(/* in */ IEcoTaskScheduler1Ptr_t pITaskScheduler);
 
 #endif /* __C_ECO_TASK_SCHEDULER_1_LAB_H__ */

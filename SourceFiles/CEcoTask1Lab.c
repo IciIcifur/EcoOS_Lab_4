@@ -17,7 +17,6 @@
  *
  */
 
-#include "IEcoBase1.h"
 #include "IEcoSystem1.h"
 #include "CEcoTask1Lab.h"
 
@@ -39,21 +38,13 @@ int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_QueryInterface(/* in */ IEcoTask1Ptr
     if (me == 0 || ppv == 0) {
         return -1;
     }
-
-    /* Проверка и получение запрошенного интерфейса */
-    if ( IsEqualUGUID(riid, &IID_IEcoTask1) ) {
+    if ( IsEqualUGUID(riid, &IID_IEcoTask1) || IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
         *ppv = &pCMe->m_pVTblITask;
         pCMe->m_pVTblITask->AddRef((IEcoTask1*)pCMe);
+        return 0;
     }
-    else if ( IsEqualUGUID(riid, &IID_IEcoUnknown) ) {
-        *ppv = &pCMe->m_pVTblITask;
-        pCMe->m_pVTblITask->AddRef((IEcoTask1*)pCMe);
-    }
-    else {
-        *ppv = 0;
-        return -1;
-    }
-    return 0;
+    *ppv = 0;
+    return -1;
 }
 
 /*
@@ -69,12 +60,9 @@ int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_QueryInterface(/* in */ IEcoTask1Ptr
  */
 uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_AddRef(/* in */ IEcoTask1Ptr_t me) {
     CEcoTask1Lab_C761620F* pCMe = (CEcoTask1Lab_C761620F*)me;
-
-    /* Проверка указателя */
-    if (me == 0 ) {
+    if (me == 0) {
         return (uint32_t)-1;
     }
-
     return ++pCMe->m_cRef;
 }
 
@@ -91,17 +79,10 @@ uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_AddRef(/* in */ IEcoTask1Ptr_t me) 
  */
 uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Release(/* in */ IEcoTask1Ptr_t me) {
     CEcoTask1Lab_C761620F* pCMe = (CEcoTask1Lab_C761620F*)me;
-
-    /* Проверка указателя */
-    if (me == 0 ) {
+    if (me == 0) {
         return (uint32_t)-1;
     }
-
-    /* Уменьшение счетчика ссылок на компонент */
-    --pCMe->m_cRef;
-
-    /* В случае обнуления счетчика, освобождение данных экземпляра */
-    if ( pCMe->m_cRef == 0 ) {
+    if (--pCMe->m_cRef == 0) {
         return 0;
     }
     return pCMe->m_cRef;
@@ -119,10 +100,7 @@ uint32_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Release(/* in */ IEcoTask1Ptr_t me)
  *
  */
 int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Delay(/*in*/ IEcoTask1Ptr_t me, /*in*/ double_t milliseconds) {
-    /*CEcoTask1Lab_C761620F* pCMe = (CEcoTask1Lab_C761620F*)me;*/
-
-    /* Проверка указателя */
-    if (me == 0 ) {
+    if (me == 0) {
         return -1;
     }
 
@@ -151,8 +129,6 @@ int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Yield(/*in*/ IEcoTask1Ptr_t me) {
     return 0;
 }
 
-
-/* Create Virtual Table IEcoTask1 */
 IEcoTask1VTbl g_x81A466F4C27540B1B33D0661E5470F1BVTbl_C761620F = {
     CEcoTask1Lab_C761620F_QueryInterface,
     CEcoTask1Lab_C761620F_AddRef,
