@@ -19,7 +19,6 @@
 
 #include "IEcoSystem1.h"
 #include "CEcoTask1Lab.h"
-#include "CEcoTaskScheduler1Lab.h"
 
 /*
  *
@@ -104,17 +103,7 @@ int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Delay(/*in*/ IEcoTask1Ptr_t me, /*in
     if (me == 0) {
         return -1;
     }
-    CEcoTask1Lab_C761620F_ext* pTask = (CEcoTask1Lab_C761620F_ext*)me;
-    if (milliseconds <= 0.0) {
-        return 0;
-    }
 
-    uint32_t ticks = (uint32_t)(milliseconds); /* 1 ms ~ 1 tick */
-    if (ticks == 0) {
-        ticks = 1;
-    }
-    pTask->state = ECO_TASK_STATE_DELAYED;
-    pTask->delayTicks = ticks;
     return 0;
 }
 
@@ -137,12 +126,9 @@ int16_t ECOCALLMETHOD CEcoTask1Lab_C761620F_Yield(/*in*/ IEcoTask1Ptr_t me) {
         return -1;
     }
 
-    CEcoTask1Lab_C761620F_ext* pTask = (CEcoTask1Lab_C761620F_ext*)me;
-    pTask->state = ECO_TASK_STATE_RUNNABLE;
     return 0;
 }
 
-/* Create Virtual Table IEcoTask1 */
 IEcoTask1VTbl g_x81A466F4C27540B1B33D0661E5470F1BVTbl_C761620F = {
     CEcoTask1Lab_C761620F_QueryInterface,
     CEcoTask1Lab_C761620F_AddRef,
